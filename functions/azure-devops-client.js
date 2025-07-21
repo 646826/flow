@@ -5,6 +5,8 @@
 
 const https = require('https');
 const { URL } = require('url');
+const { logger } = require('./logger');
+const { ErrorHandler, AzureDevOpsError } = require('./error-handler');
 
 class AzureDevOpsClient {
     constructor(organization, personalAccessToken) {
@@ -18,6 +20,7 @@ class AzureDevOpsClient {
      * Make authenticated request to Azure DevOps API
      */
     async makeRequest(method, endpoint, data = null) {
+        const startTime = Date.now();
         const url = new URL(endpoint, this.baseUrl);
         url.searchParams.set('api-version', this.apiVersion);
 
@@ -28,50 +31,114 @@ class AzureDevOpsClient {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json',
                 'User-Agent': 'PR-Review-System/1.0'
-            }
+            },
+            timeout: 30000
         };
 
-        return new Promise((resolve, reject) => {
-            const req = https.request(url, options, (res) => {
-                let responseData = '';
-                
-                res.on('data', (chunk) => {
-                    responseData += chunk;
-                });
-                
-                res.on('end', () => {
-                    try {
-                        const parsedData = responseData ? JSON.parse(responseData) : {};
-                        
-                        if (res.statusCode >= 200 && res.statusCode < 300) {
-                            resolve(parsedData);
-                        } else {
-                            reject(new Error(`API request failed: ${res.statusCode} - ${parsedData.message || responseData}`));
-                        }
-                    } catch (error) {
-                        reject(new Error(`Failed to parse response: ${error.message}`));
-                    }
-                });
-            });
-
-            req.on('error', (error) => {
-                reject(new Error(`Request failed: ${error.message}`));
-            });
-
-            if (data) {
-                req.write(JSON.stringify(data));
-            }
-
-            req.end();
+        logger.debug('Making Azure DevOps API request', {
+            method,
+            endpoint,
+            hasData: !!data
         });
+
+        return ErrorHandler.withTimeout(
+            () => new Promise((resolve, reject) => {
+                const req = https.request(url, options, (res) => {
+                    let responseData = '';
+                    
+                    res.on('data', (chunk) => {
+                        responseData += chunk;
+                    });
+                    
+                    res.on('end', () => {
+                        const duration = Date.now() - startTime;
+                        
+                        try {
+                            const parsedData = responseData ? JSON.parse(responseData) : {};
+                            
+                            if (res.statusCode >= 200 && res.statusCode < 300) {
+                                logger.logApiCall(method, endpoint, res.statusCode, duration);
+                                resolve(parsedData);
+                            } else {
+                                const error = new AzureDevOpsError(
+                                    `API request failed: ${res.statusCode} - ${parsedData.message || responseData}`,
+                                    res.statusCode,
+                                    {
+                                        endpoint,
+                                        method,
+                                        statusCode: res.statusCode,
+                                        response: parsedData
+                                    }
+                                );
+                                logger.logApiCall(method, endpoint, res.statusCode, duration, error);
+                                reject(error);
+                            }
+                        } catch (parseError) {
+                            const error = new AzureDevOpsError(
+                                `Failed to parse response: ${parseError.message}`,
+                                500,
+                                {
+                                    endpoint,
+                                    method,
+                                    parseError: parseError.message,
+                                    rawResponse: responseData
+                                }
+                            );
+                            logger.logApiCall(method, endpoint, res.statusCode, duration, error);
+                            reject(error);
+                        }
+                    });
+                });
+
+                req.on('error', (error) => {
+                    const duration = Date.now() - startTime;
+                    const azureError = new AzureDevOpsError(
+                        `Request failed: ${error.message}`,
+                        500,
+                        {
+                            endpoint,
+                            method,
+                            originalError: error.message
+                        }
+                    );
+                    logger.logApiCall(method, endpoint, 0, duration, azureError);
+                    reject(azureError);
+                });
+
+                req.on('timeout', () => {
+                    req.destroy();
+                    const duration = Date.now() - startTime;
+                    const error = new AzureDevOpsError(
+                        'Request timeout',
+                        408,
+                        { endpoint, method, timeout: options.timeout }
+                    );
+                    logger.logApiCall(method, endpoint, 408, duration, error);
+                    reject(error);
+                });
+
+                if (data) {
+                    req.write(JSON.stringify(data));
+                }
+
+                req.end();
+            }),
+            options.timeout
+        );
     }
 
     /**
      * Get pull request details
      */
     async getPullRequest(project, repositoryId, pullRequestId) {
+        ErrorHandler.validateRequired({ project, repositoryId, pullRequestId }, 
+            ['project', 'repositoryId', 'pullRequestId']);
+        
         const endpoint = `/${project}/_apis/git/repositories/${repositoryId}/pullrequests/${pullRequestId}`;
-        return this.makeRequest('GET', endpoint);
+        return ErrorHandler.retry(() => this.makeRequest('GET', endpoint), {
+            maxAttempts: 3,
+            retryCondition: (error) => error.statusCode >= 500
+        });
     }
 
     /**
@@ -107,8 +174,18 @@ class AzureDevOpsClient {
      * Create pull request comment thread
      */
     async createPullRequestThread(project, repositoryId, pullRequestId, threadData) {
+        ErrorHandler.validateRequired({ project, repositoryId, pullRequestId, threadData }, 
+            ['project', 'repositoryId', 'pullRequestId', 'threadData']);
+        
+        if (!threadData.comments || !Array.isArray(threadData.comments) || threadData.comments.length === 0) {
+            throw new AzureDevOpsError('Thread data must contain at least one comment', 400);
+        }
+
         const endpoint = `/${project}/_apis/git/repositories/${repositoryId}/pullrequests/${pullRequestId}/threads`;
-        return this.makeRequest('POST', endpoint, threadData);
+        return ErrorHandler.retry(() => this.makeRequest('POST', endpoint, threadData), {
+            maxAttempts: 2,
+            retryCondition: (error) => error.statusCode >= 500
+        });
     }
 
     /**
