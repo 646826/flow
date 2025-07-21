@@ -1,0 +1,18 @@
+# Unit Tests Directory
+
+This directory contains unit tests for individual components and functions.
+
+## Structure
+
+- `functions/` - Tests for utility functions
+- `workflows/` - Tests for workflow components
+- `config/` - Tests for configuration validation
+- `integration/` - Tests for API integrations
+
+## Running Tests
+
+```bash
+npm test
+# or
+yarn test
+```

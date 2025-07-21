@@ -1,0 +1,256 @@
+
+version: "1.0.0"
+name: "Azure DevOps PR Review Rules"
+
+global_settings:
+  enabled: true
+  auto_approve_threshold: 2  # Risk score below this can be auto-approved
+  block_merge_threshold: 8   # Risk score above this blocks merge
+  require_human_review_threshold: 6  # Risk score above this requires human review
+  
+  max_file_size_kb: 1000
+  max_files_per_pr: 50
+  max_lines_changed: 2000
+
+language_rules:
+  javascript:
+    enabled: true
+    complexity_threshold: 15
+    test_coverage_required: 70
+    security_patterns:
+      - sql_injection
+      - xss_vulnerability
+      - hardcoded_secrets
+    performance_patterns:
+      - inefficient_loops
+      - blocking_operations
+      - memory_leaks
+    quality_patterns:
+      - long_methods
+      - magic_numbers
+      - poor_naming
+
+  typescript:
+    enabled: true
+    complexity_threshold: 15
+    test_coverage_required: 75
+    type_safety_required: true
+    security_patterns:
+      - sql_injection
+      - xss_vulnerability
+      - hardcoded_secrets
+    performance_patterns:
+      - inefficient_loops
+      - blocking_operations
+    quality_patterns:
+      - long_methods
+      - magic_numbers
+      - missing_types
+
+  python:
+    enabled: true
+    complexity_threshold: 12
+    test_coverage_required: 80
+    security_patterns:
+      - sql_injection
+      - command_injection
+      - hardcoded_secrets
+      - insecure_random
+    performance_patterns:
+      - inefficient_loops
+      - blocking_operations
+      - inefficient_queries
+    quality_patterns:
+      - long_methods
+      - magic_numbers
+      - poor_naming
+      - missing_docstrings
+
+  csharp:
+    enabled: true
+    complexity_threshold: 15
+    test_coverage_required: 75
+    security_patterns:
+      - sql_injection
+      - hardcoded_secrets
+      - weak_crypto
+    performance_patterns:
+      - inefficient_loops
+      - blocking_operations
+      - resource_leaks
+    quality_patterns:
+      - long_methods
+      - magic_numbers
+      - poor_naming
+
+  java:
+    enabled: true
+    complexity_threshold: 15
+    test_coverage_required: 75
+    security_patterns:
+      - sql_injection
+      - hardcoded_secrets
+      - weak_crypto
+      - insecure_deserialization
+    performance_patterns:
+      - inefficient_loops
+      - blocking_operations
+      - resource_leaks
+    quality_patterns:
+      - long_methods
+      - magic_numbers
+      - poor_naming
+
+file_type_rules:
+  configuration_files:
+    patterns:
+      - "*.config"
+      - "*.ini"
+      - "*.env"
+      - "appsettings*.json"
+      - "web.config"
+      - "package.json"
+      - "requirements.txt"
+      - "Dockerfile"
+      - "docker-compose*.yml"
+    risk_multiplier: 1.5
+    require_review: true
+    
+  security_sensitive:
+    patterns:
+      - "**/auth/**"
+      - "**/security/**"
+      - "**/crypto/**"
+      - "**/*password*"
+      - "**/*token*"
+      - "**/*certificate*"
+      - "*.key"
+      - "*.pem"
+      - "*.crt"
+    risk_multiplier: 2.0
+    require_security_review: true
+    
+  database_files:
+    patterns:
+      - "**/migrations/**"
+      - "**/migrate/**"
+      - "*.migration.*"
+      - "**/sql/**"
+      - "*.sql"
+    risk_multiplier: 1.8
+    require_dba_review: true
+    
+  infrastructure:
+    patterns:
+      - "**/terraform/**"
+      - "*.tf"
+      - "**/ansible/**"
+      - "*.yml"
+      - "*.yaml"
+      - "**/k8s/**"
+      - "**/kubernetes/**"
+    risk_multiplier: 1.7
+    require_ops_review: true
+
+criteria_weights:
+  security: 0.4
+  performance: 0.2
+  maintainability: 0.2
+  testing: 0.1
+  documentation: 0.1
+
+severity_scores:
+  critical: 4
+  high: 3
+  medium: 2
+  low: 1
+
+auto_fix:
+  enabled: false  # Disabled by default for safety
+  allowed_fixes:
+    - formatting
+    - import_sorting
+    - unused_imports
+    - simple_typos
+  
+  excluded_files:
+    - "*.config"
+    - "*.env"
+    - "**/migrations/**"
+    - "package.json"
+    - "requirements.txt"
+
+comment_rules:
+  max_comments_per_file: 10
+  min_severity_for_comment: "medium"
+  group_similar_issues: true
+  include_positive_feedback: true
+  
+  comment_templates:
+    security_issue: "🔒 Security Issue"
+    performance_issue: "⚡ Performance Concern"
+    quality_issue: "📝 Code Quality"
+    suggestion: "💡 Suggestion"
+    positive: "✅ Good Practice"
+
+integrations:
+  azure_devops:
+    create_work_items: false
+    update_pr_status: true
+    post_summary_comment: true
+    post_inline_comments: true
+    
+  external_tools:
+    sonarqube:
+      enabled: false
+      url: ""
+      token_env: "SONARQUBE_TOKEN"
+      
+    snyk:
+      enabled: false
+      token_env: "SNYK_TOKEN"
+      
+    codeclimate:
+      enabled: false
+      token_env: "CODECLIMATE_TOKEN"
+
+notifications:
+  email:
+    enabled: false
+    recipients: []
+    
+  slack:
+    enabled: false
+    webhook_url_env: "SLACK_WEBHOOK_URL"
+    channel: "#code-reviews"
+    
+  teams:
+    enabled: false
+    webhook_url_env: "TEAMS_WEBHOOK_URL"
+
+exemptions:
+  emergency_deployments:
+    enabled: true
+    bypass_keywords:
+      - "[EMERGENCY]"
+      - "[HOTFIX]"
+      - "[CRITICAL]"
+    require_post_review: true
+    
+  documentation_only:
+    enabled: true
+    file_patterns:
+      - "*.md"
+      - "*.txt"
+      - "**/docs/**"
+    skip_analysis: true
+    
+  test_files:
+    enabled: true
+    file_patterns:
+      - "**/test/**"
+      - "**/tests/**"
+      - "*.test.*"
+      - "*.spec.*"
+    reduced_scrutiny: true
+    risk_multiplier: 0.5

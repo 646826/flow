@@ -1,0 +1,53 @@
+
+name: "Azure DevOps PR Review Workflow"
+version: "1.0.0"
+description: "Autonomous PR review system using AI-powered analysis"
+
+triggers:
+  - webhook:
+      path: "/webhook/pr"
+      methods: ["POST"]
+      source: "azure-devops"
+
+blocks:
+  - name: "webhook-listener"
+    type: "webhook-processor"
+    config: "./blocks/webhook-listener.yaml"
+    
+  - name: "azure-api-client"
+    type: "api-client"
+    config: "./blocks/azure-api-client.yaml"
+    depends_on: ["webhook-listener"]
+    
+  - name: "code-analyzer-agent"
+    type: "ai-agent"
+    config: "./blocks/code-analyzer-agent.yaml"
+    depends_on: ["azure-api-client"]
+    
+  - name: "risk-assessment"
+    type: "analyzer"
+    config: "./blocks/risk-assessment.yaml"
+    depends_on: ["code-analyzer-agent"]
+    
+  - name: "comment-generator"
+    type: "generator"
+    config: "./blocks/comment-generator.yaml"
+    depends_on: ["risk-assessment"]
+    
+  - name: "report-builder"
+    type: "builder"
+    config: "./blocks/report-builder.yaml"
+    depends_on: ["comment-generator"]
+
+outputs:
+  - name: "pr-review-complete"
+    type: "webhook-response"
+    status_code: 200
+    body: "PR review completed successfully"
+
+error_handling:
+  retry_attempts: 3
+  timeout: 300
+  fallback_response:
+    status_code: 500
+    body: "PR review failed - please check logs"

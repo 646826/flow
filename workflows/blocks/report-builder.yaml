@@ -1,0 +1,122 @@
+
+name: "report-builder"
+type: "builder"
+version: "1.0.0"
+
+report_types:
+  summary_report:
+    format: "json"
+    sections:
+      - overview
+      - metrics
+      - issues_breakdown
+      - recommendations
+      
+  detailed_report:
+    format: "markdown"
+    sections:
+      - executive_summary
+      - technical_analysis
+      - risk_assessment
+      - action_items
+      - appendix
+      
+  metrics_report:
+    format: "json"
+    sections:
+      - code_quality_metrics
+      - security_metrics
+      - performance_metrics
+      - maintainability_metrics
+
+templates:
+  executive_summary: |
+    
+    - **Repository:** {repo_name}
+    - **Pull Request:** #{pr_id}
+    - **Author:** {author}
+    - **Branch:** {source_branch} → {target_branch}
+    - **Files Changed:** {files_changed}
+    - **Lines Added/Removed:** +{lines_added}/-{lines_removed}
+    
+    - **Overall Risk Score:** {risk_score}/10
+    - **Recommendation:** {recommendation}
+    - **Critical Issues:** {critical_issues_count}
+    - **Review Status:** {review_status}
+    
+  technical_analysis: |
+    
+    {code_quality_analysis}
+    
+    {security_analysis}
+    
+    {performance_analysis}
+    
+    {architecture_analysis}
+    
+  risk_assessment: |
+    
+    | Category | Score | Impact | Mitigation |
+    |----------|-------|---------|------------|
+    {#each risk_categories as category}
+    | {category.name} | {category.score}/10 | {category.impact} | {category.mitigation} |
+    {/each}
+    
+    {#each critical_risks as risk}
+    **Severity:** {risk.severity}
+    **Description:** {risk.description}
+    **Mitigation:** {risk.mitigation}
+    {/each}
+
+metrics_collection:
+  code_quality:
+    - cyclomatic_complexity
+    - code_duplication
+    - test_coverage
+    - documentation_coverage
+    
+  security:
+    - vulnerability_count
+    - security_hotspots
+    - dependency_vulnerabilities
+    - secret_exposure_risk
+    
+  performance:
+    - performance_impact_score
+    - resource_usage_changes
+    - optimization_opportunities
+    
+  maintainability:
+    - maintainability_index
+    - technical_debt_ratio
+    - code_smells_count
+
+output_destinations:
+  azure_devops:
+    type: "pull_request_comment"
+    format: "markdown"
+    
+  file_system:
+    type: "file"
+    path: "/reports/{pr_id}_{timestamp}.md"
+    format: "markdown"
+    
+  webhook:
+    type: "http_post"
+    url: "{webhook_url}"
+    format: "json"
+    
+  database:
+    type: "database_insert"
+    table: "pr_reviews"
+    format: "json"
+
+aggregation:
+  historical_data: true
+  trend_analysis: true
+  comparative_metrics: true
+  
+  retention_policy:
+    reports: "90_days"
+    metrics: "1_year"
+    summaries: "permanent"

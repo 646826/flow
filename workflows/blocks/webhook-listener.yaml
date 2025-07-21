@@ -1,0 +1,55 @@
+
+name: "webhook-listener"
+type: "webhook-processor"
+version: "1.0.0"
+
+input:
+  schema:
+    type: "object"
+    properties:
+      eventType:
+        type: "string"
+        enum: ["git.pullrequest.created", "git.pullrequest.updated"]
+      resource:
+        type: "object"
+        properties:
+          pullRequestId:
+            type: "integer"
+          repository:
+            type: "object"
+          sourceRefName:
+            type: "string"
+          targetRefName:
+            type: "string"
+
+processing:
+  validation:
+    - check: "eventType in ['git.pullrequest.created', 'git.pullrequest.updated']"
+      error: "Unsupported event type"
+    - check: "resource.pullRequestId exists"
+      error: "Missing pull request ID"
+    
+  extraction:
+    pr_id: "resource.pullRequestId"
+    repo_id: "resource.repository.id"
+    repo_name: "resource.repository.name"
+    source_branch: "resource.sourceRefName"
+    target_branch: "resource.targetRefName"
+    project_id: "resource.repository.project.id"
+
+output:
+  format: "json"
+  fields:
+    - pr_id
+    - repo_id
+    - repo_name
+    - source_branch
+    - target_branch
+    - project_id
+    - event_type: "eventType"
+
+security:
+  signature_validation: true
+  allowed_ips: []
+  rate_limiting:
+    requests_per_minute: 60

@@ -1,0 +1,356 @@
+
+version: "1.0.0"
+name: "Code Quality Metrics"
+
+complexity:
+  cyclomatic_complexity:
+    enabled: true
+    thresholds:
+      low: 5
+      medium: 10
+      high: 15
+      critical: 20
+    languages:
+      javascript: { max: 15, warning: 10 }
+      typescript: { max: 15, warning: 10 }
+      python: { max: 12, warning: 8 }
+      csharp: { max: 15, warning: 10 }
+      java: { max: 15, warning: 10 }
+      go: { max: 10, warning: 7 }
+      rust: { max: 10, warning: 7 }
+    
+  cognitive_complexity:
+    enabled: true
+    thresholds:
+      low: 10
+      medium: 15
+      high: 25
+      critical: 30
+    
+  nesting_depth:
+    enabled: true
+    max_depth: 4
+    warning_depth: 3
+
+size_metrics:
+  lines_of_code:
+    enabled: true
+    thresholds:
+      function:
+        warning: 50
+        error: 100
+      class:
+        warning: 300
+        error: 500
+      file:
+        warning: 500
+        error: 1000
+        
+  parameter_count:
+    enabled: true
+    max_parameters: 5
+    warning_parameters: 4
+    
+  return_statements:
+    enabled: true
+    max_returns: 3
+    warning_returns: 2
+
+duplication:
+  enabled: true
+  min_duplicate_lines: 6
+  thresholds:
+    low: 3      # 3% duplication
+    medium: 5   # 5% duplication
+    high: 10    # 10% duplication
+    critical: 15 # 15% duplication
+    
+  ignore_patterns:
+    - "import.*"
+    - "using.*"
+    - "package.*"
+    - "//.*"
+    - "/\\*.*\\*/"
+    - "#.*"
+
+maintainability:
+  maintainability_index:
+    enabled: true
+    thresholds:
+      excellent: 85
+      good: 70
+      moderate: 50
+      difficult: 25
+      unmaintainable: 0
+      
+  technical_debt_ratio:
+    enabled: true
+    thresholds:
+      low: 5      # 5% technical debt
+      medium: 10  # 10% technical debt
+      high: 20    # 20% technical debt
+      critical: 30 # 30% technical debt
+
+documentation:
+  enabled: true
+  comment_density:
+    min_percentage: 10
+    target_percentage: 20
+    
+  public_api_documentation:
+    required: true
+    languages:
+      - javascript
+      - typescript
+      - python
+      - csharp
+      - java
+      
+  readme_requirements:
+    required_sections:
+      - "Installation"
+      - "Usage"
+      - "API Documentation"
+      - "Contributing"
+
+testing:
+  test_coverage:
+    enabled: true
+    thresholds:
+      minimum: 60
+      target: 80
+      excellent: 90
+    
+    by_language:
+      javascript: { minimum: 70, target: 85 }
+      typescript: { minimum: 75, target: 90 }
+      python: { minimum: 80, target: 90 }
+      csharp: { minimum: 75, target: 85 }
+      java: { minimum: 75, target: 85 }
+      
+  test_to_code_ratio:
+    enabled: true
+    minimum_ratio: 0.5  # 1:2 test to code ratio
+    target_ratio: 1.0   # 1:1 test to code ratio
+    
+  assertion_density:
+    enabled: true
+    min_assertions_per_test: 1
+    max_assertions_per_test: 5
+
+naming_conventions:
+  enabled: true
+  
+  javascript:
+    variables: "camelCase"
+    functions: "camelCase"
+    classes: "PascalCase"
+    constants: "UPPER_SNAKE_CASE"
+    files: "kebab-case"
+    
+  typescript:
+    variables: "camelCase"
+    functions: "camelCase"
+    classes: "PascalCase"
+    interfaces: "PascalCase"
+    types: "PascalCase"
+    constants: "UPPER_SNAKE_CASE"
+    files: "kebab-case"
+    
+  python:
+    variables: "snake_case"
+    functions: "snake_case"
+    classes: "PascalCase"
+    constants: "UPPER_SNAKE_CASE"
+    modules: "snake_case"
+    
+  csharp:
+    variables: "camelCase"
+    methods: "PascalCase"
+    classes: "PascalCase"
+    interfaces: "IPascalCase"
+    constants: "PascalCase"
+    
+  java:
+    variables: "camelCase"
+    methods: "camelCase"
+    classes: "PascalCase"
+    interfaces: "PascalCase"
+    constants: "UPPER_SNAKE_CASE"
+    packages: "lowercase"
+
+code_smells:
+  enabled: true
+  
+  patterns:
+    long_method:
+      enabled: true
+      max_lines: 50
+      severity: "medium"
+      
+    long_parameter_list:
+      enabled: true
+      max_parameters: 5
+      severity: "medium"
+      
+    large_class:
+      enabled: true
+      max_lines: 300
+      max_methods: 20
+      severity: "medium"
+      
+    duplicate_code:
+      enabled: true
+      min_lines: 6
+      severity: "high"
+      
+    dead_code:
+      enabled: true
+      severity: "low"
+      
+    magic_numbers:
+      enabled: true
+      allowed_numbers: [0, 1, -1, 2, 10, 100, 1000]
+      severity: "low"
+      
+    god_class:
+      enabled: true
+      max_responsibilities: 5
+      severity: "high"
+      
+    feature_envy:
+      enabled: true
+      severity: "medium"
+      
+    inappropriate_intimacy:
+      enabled: true
+      severity: "medium"
+      
+    refused_bequest:
+      enabled: true
+      severity: "low"
+
+performance:
+  enabled: true
+  
+  patterns:
+    inefficient_loops:
+      enabled: true
+      severity: "medium"
+      patterns:
+        - "for.*for.*for"  # Nested loops
+        - "while.*while"   # Nested while loops
+        
+    database_queries_in_loops:
+      enabled: true
+      severity: "high"
+      patterns:
+        - "for.*query"
+        - "while.*select"
+        - "foreach.*find"
+        
+    string_concatenation_in_loops:
+      enabled: true
+      severity: "medium"
+      languages: ["java", "csharp"]
+      
+    unnecessary_object_creation:
+      enabled: true
+      severity: "low"
+      
+    blocking_operations:
+      enabled: true
+      severity: "high"
+      patterns:
+        - "Thread.sleep"
+        - "time.sleep"
+        - "await.*sync"
+
+security:
+  enabled: true
+  
+  vulnerability_density:
+    thresholds:
+      low: 0.1     # 0.1 vulnerabilities per 100 lines
+      medium: 0.5  # 0.5 vulnerabilities per 100 lines
+      high: 1.0    # 1.0 vulnerabilities per 100 lines
+      critical: 2.0 # 2.0 vulnerabilities per 100 lines
+      
+  security_hotspots:
+    enabled: true
+    track_trends: true
+    
+  dependency_vulnerabilities:
+    enabled: true
+    severity_thresholds:
+      critical: 0  # No critical vulnerabilities allowed
+      high: 2      # Max 2 high severity vulnerabilities
+      medium: 5    # Max 5 medium severity vulnerabilities
+
+language_specific:
+  javascript:
+    eslint_compliance: true
+    prettier_compliance: true
+    
+  typescript:
+    strict_mode: true
+    no_any_usage: true
+    
+  python:
+    pep8_compliance: true
+    type_hints_coverage: 80
+    
+  csharp:
+    code_analysis_compliance: true
+    nullable_reference_types: true
+    
+  java:
+    checkstyle_compliance: true
+    spotbugs_compliance: true
+
+reporting:
+  enabled: true
+  
+  formats:
+    - json
+    - markdown
+    - html
+    
+  include_trends: true
+  include_comparisons: true
+  
+  thresholds:
+    overall_quality_gate: 70  # Minimum overall quality score
+    
+  weights:
+    complexity: 0.25
+    duplication: 0.20
+    maintainability: 0.20
+    testing: 0.15
+    documentation: 0.10
+    security: 0.10
+
+exclusions:
+  files:
+    - "**/node_modules/**"
+    - "**/vendor/**"
+    - "**/build/**"
+    - "**/dist/**"
+    - "**/target/**"
+    - "**/*.min.js"
+    - "**/*.generated.*"
+    - "**/migrations/**"
+    
+  directories:
+    - "test"
+    - "tests"
+    - "spec"
+    - "mock"
+    - "fixtures"
+    - "coverage"
+    
+  patterns:
+    - "*.test.*"
+    - "*.spec.*"
+    - "*.mock.*"
+    - "*.fixture.*"

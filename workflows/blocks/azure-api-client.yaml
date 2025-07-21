@@ -1,0 +1,60 @@
+
+name: "azure-api-client"
+type: "api-client"
+version: "1.0.0"
+
+connection:
+  base_url: "https://dev.azure.com"
+  authentication:
+    type: "personal_access_token"
+    token_env: "AZURE_DEVOPS_PAT"
+  
+  headers:
+    Content-Type: "application/json"
+    Accept: "application/json"
+    User-Agent: "PR-Review-System/1.0"
+
+endpoints:
+  get_pull_request:
+    method: "GET"
+    path: "/{organization}/{project}/_apis/git/repositories/{repositoryId}/pullrequests/{pullRequestId}"
+    params:
+      api-version: "7.0"
+      
+  get_pull_request_commits:
+    method: "GET"
+    path: "/{organization}/{project}/_apis/git/repositories/{repositoryId}/pullrequests/{pullRequestId}/commits"
+    params:
+      api-version: "7.0"
+      
+  get_pull_request_changes:
+    method: "GET"
+    path: "/{organization}/{project}/_apis/git/repositories/{repositoryId}/pullrequests/{pullRequestId}/iterations/{iterationId}/changes"
+    params:
+      api-version: "7.0"
+      
+  create_pull_request_thread:
+    method: "POST"
+    path: "/{organization}/{project}/_apis/git/repositories/{repositoryId}/pullrequests/{pullRequestId}/threads"
+    params:
+      api-version: "7.0"
+      
+  get_file_content:
+    method: "GET"
+    path: "/{organization}/{project}/_apis/git/repositories/{repositoryId}/items"
+    params:
+      api-version: "7.0"
+      path: "{filePath}"
+      version: "{commitId}"
+
+retry_policy:
+  max_attempts: 3
+  backoff_strategy: "exponential"
+  initial_delay: 1000
+  max_delay: 10000
+
+error_handling:
+  timeout: 30000
+  circuit_breaker:
+    failure_threshold: 5
+    recovery_timeout: 60000

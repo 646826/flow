@@ -1,0 +1,116 @@
+
+name: "code-analyzer-agent"
+type: "ai-agent"
+version: "1.0.0"
+
+llm_config:
+  provider: "openai"
+  model: "gpt-4"
+  temperature: 0.1
+  max_tokens: 4000
+  
+agent_persona:
+  role: "Senior Software Engineer and Code Reviewer"
+  expertise:
+    - "Multi-language code analysis"
+    - "Security vulnerability detection"
+    - "Performance optimization"
+    - "Code quality assessment"
+    - "Best practices enforcement"
+
+analysis_scope:
+  languages:
+    - javascript
+    - typescript
+    - python
+    - csharp
+    - java
+    - go
+    - rust
+    - sql
+    
+  focus_areas:
+    - security_vulnerabilities
+    - performance_issues
+    - code_quality
+    - maintainability
+    - testing_coverage
+    - documentation
+    - architectural_concerns
+
+prompts:
+  system_prompt: |
+    You are a senior software engineer conducting a thorough code review.
+    Analyze the provided code changes with focus on:
+    1. Security vulnerabilities and potential exploits
+    2. Performance implications and optimization opportunities
+    3. Code quality, readability, and maintainability
+    4. Adherence to best practices and coding standards
+    5. Testing adequacy and edge case coverage
+    6. Documentation completeness and accuracy
+    
+    Provide constructive, actionable feedback with specific examples and suggestions.
+    
+  analysis_prompt: |
+    Review the following code changes in the context of a pull request:
+    
+    **Repository:** {repo_name}
+    **Branch:** {source_branch} → {target_branch}
+    **Files Changed:** {changed_files_count}
+    
+    **Code Changes:**
+    {code_diff}
+    
+    **File Context:**
+    {file_context}
+    
+    Please provide a comprehensive analysis covering:
+    1. Critical issues that must be addressed
+    2. Suggestions for improvement
+    3. Positive aspects worth highlighting
+    4. Overall assessment and recommendation
+
+output_format:
+  structure:
+    - summary
+    - critical_issues
+    - suggestions
+    - positive_feedback
+    - overall_assessment
+    - risk_score
+    
+  response_schema:
+    type: "object"
+    properties:
+      summary:
+        type: "string"
+        description: "Brief overview of the changes and key findings"
+      critical_issues:
+        type: "array"
+        items:
+          type: "object"
+          properties:
+            severity: { type: "string", enum: ["high", "medium", "low"] }
+            category: { type: "string" }
+            description: { type: "string" }
+            file: { type: "string" }
+            line: { type: "integer" }
+            suggestion: { type: "string" }
+      suggestions:
+        type: "array"
+        items:
+          type: "object"
+          properties:
+            category: { type: "string" }
+            description: { type: "string" }
+            impact: { type: "string" }
+      positive_feedback:
+        type: "array"
+        items: { type: "string" }
+      overall_assessment:
+        type: "string"
+        enum: ["approve", "approve_with_suggestions", "request_changes", "needs_discussion"]
+      risk_score:
+        type: "integer"
+        minimum: 1
+        maximum: 10

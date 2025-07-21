@@ -1,0 +1,250 @@
+
+version: "1.0.0"
+name: "Security Vulnerability Patterns"
+
+sql_injection:
+  enabled: true
+  severity: "critical"
+  patterns:
+    - name: "Dynamic SQL Construction"
+      regex: '(?i)(select|insert|update|delete|drop|create|alter)\s+.*\+.*\$'
+      languages: ["javascript", "typescript", "python", "csharp", "java"]
+      description: "Potential SQL injection through string concatenation"
+      suggestion: "Use parameterized queries or prepared statements"
+      
+    - name: "String Interpolation in SQL"
+      regex: '(?i)(select|insert|update|delete)\s+.*\$\{.*\}'
+      languages: ["javascript", "typescript"]
+      description: "SQL injection risk through template literals"
+      suggestion: "Use parameterized queries instead of string interpolation"
+      
+    - name: "Format String SQL"
+      regex: '(?i)(select|insert|update|delete).*\.format\('
+      languages: ["python", "csharp"]
+      description: "SQL injection through string formatting"
+      suggestion: "Use parameterized queries with proper escaping"
+
+xss_vulnerability:
+  enabled: true
+  severity: "high"
+  patterns:
+    - name: "innerHTML Assignment"
+      regex: '\.innerHTML\s*=\s*.*[^(escapeHtml|sanitize)]'
+      languages: ["javascript", "typescript"]
+      description: "Potential XSS through innerHTML assignment"
+      suggestion: "Use textContent or sanitize HTML content"
+      
+    - name: "document.write Usage"
+      regex: 'document\.write\s*\('
+      languages: ["javascript", "typescript"]
+      description: "XSS risk through document.write"
+      suggestion: "Use safer DOM manipulation methods"
+      
+    - name: "eval() Usage"
+      regex: '\beval\s*\('
+      languages: ["javascript", "typescript", "python"]
+      description: "Code injection risk through eval()"
+      suggestion: "Avoid eval() or use safer alternatives like JSON.parse()"
+      
+    - name: "Unescaped Output"
+      regex: '(?i)response\.write\s*\(.*[^(htmlencode|escape)]'
+      languages: ["csharp"]
+      description: "Potential XSS through unescaped output"
+      suggestion: "Use HtmlEncode or similar escaping functions"
+
+hardcoded_secrets:
+  enabled: true
+  severity: "high"
+  patterns:
+    - name: "API Keys"
+      regex: '(?i)(api_key|apikey|api-key)\s*[=:]\s*["\'][a-zA-Z0-9]{20,}["\']'
+      languages: ["*"]
+      description: "Hardcoded API key detected"
+      suggestion: "Move API keys to environment variables or secure configuration"
+      
+    - name: "Passwords"
+      regex: '(?i)password\s*[=:]\s*["\'][^"\']{8,}["\']'
+      languages: ["*"]
+      description: "Hardcoded password detected"
+      suggestion: "Use environment variables or secure credential storage"
+      
+    - name: "Database Connection Strings"
+      regex: '(?i)(connection_string|connectionstring)\s*[=:]\s*["\'].*password.*["\']'
+      languages: ["*"]
+      description: "Database connection string with embedded credentials"
+      suggestion: "Use secure configuration or connection string builders"
+      
+    - name: "JWT Secrets"
+      regex: '(?i)(jwt_secret|jwtsecret|jwt-secret)\s*[=:]\s*["\'][a-zA-Z0-9]{32,}["\']'
+      languages: ["*"]
+      description: "Hardcoded JWT secret detected"
+      suggestion: "Store JWT secrets in secure environment variables"
+      
+    - name: "Private Keys"
+      regex: '-----BEGIN\s+(RSA\s+)?PRIVATE\s+KEY-----'
+      languages: ["*"]
+      description: "Private key embedded in code"
+      suggestion: "Store private keys in secure key management systems"
+
+weak_crypto:
+  enabled: true
+  severity: "medium"
+  patterns:
+    - name: "MD5 Usage"
+      regex: '\bmd5\b'
+      languages: ["*"]
+      description: "MD5 is cryptographically broken"
+      suggestion: "Use SHA-256 or stronger hashing algorithms"
+      
+    - name: "SHA1 Usage"
+      regex: '\bsha1\b(?!256)'
+      languages: ["*"]
+      description: "SHA-1 is cryptographically weak"
+      suggestion: "Use SHA-256 or stronger hashing algorithms"
+      
+    - name: "DES Encryption"
+      regex: '\bdes\b(?!_ede3)'
+      languages: ["*"]
+      description: "DES encryption is insecure"
+      suggestion: "Use AES or other modern encryption algorithms"
+      
+    - name: "Weak Random"
+      regex: 'Math\.random\(\)|Random\(\)'
+      languages: ["javascript", "typescript", "csharp"]
+      description: "Insecure random number generation"
+      suggestion: "Use cryptographically secure random number generators"
+
+command_injection:
+  enabled: true
+  severity: "critical"
+  patterns:
+    - name: "Shell Command Execution"
+      regex: '(exec|system|shell_exec|passthru|popen)\s*\(.*\$'
+      languages: ["python", "php"]
+      description: "Potential command injection"
+      suggestion: "Use subprocess with shell=False or validate input"
+      
+    - name: "Process Execution"
+      regex: 'Process\.Start\s*\(.*[^(ProcessStartInfo)]'
+      languages: ["csharp"]
+      description: "Unsafe process execution"
+      suggestion: "Use ProcessStartInfo with proper argument handling"
+      
+    - name: "Runtime Execution"
+      regex: 'Runtime\.getRuntime\(\)\.exec\s*\('
+      languages: ["java"]
+      description: "Potential command injection in Java"
+      suggestion: "Use ProcessBuilder with proper argument handling"
+
+path_traversal:
+  enabled: true
+  severity: "high"
+  patterns:
+    - name: "Directory Traversal"
+      regex: '\.\./|\.\.\\'
+      languages: ["*"]
+      description: "Potential path traversal attack"
+      suggestion: "Validate and sanitize file paths"
+      
+    - name: "Unsafe File Operations"
+      regex: '(File\.ReadAllText|File\.WriteAllText|FileStream)\s*\(.*[^(Path\.Combine)]'
+      languages: ["csharp"]
+      description: "Unsafe file operations without path validation"
+      suggestion: "Use Path.Combine and validate file paths"
+
+insecure_deserialization:
+  enabled: true
+  severity: "high"
+  patterns:
+    - name: "Unsafe Deserialization"
+      regex: '(pickle\.loads|yaml\.load|ObjectInputStream)'
+      languages: ["python", "java"]
+      description: "Insecure deserialization detected"
+      suggestion: "Use safe deserialization methods or validate input"
+      
+    - name: "JSON Deserialization"
+      regex: 'JsonConvert\.DeserializeObject.*TypeNameHandling'
+      languages: ["csharp"]
+      description: "Potentially unsafe JSON deserialization"
+      suggestion: "Avoid TypeNameHandling or use safe settings"
+
+auth_issues:
+  enabled: true
+  severity: "high"
+  patterns:
+    - name: "Hardcoded Admin Credentials"
+      regex: '(?i)(admin|administrator)\s*[=:]\s*["\'].*["\']'
+      languages: ["*"]
+      description: "Hardcoded admin credentials"
+      suggestion: "Use proper authentication mechanisms"
+      
+    - name: "Weak Session Management"
+      regex: 'session_regenerate_id\(\)|session\.regenerate\(\)'
+      languages: ["php", "javascript"]
+      description: "Session management without proper security"
+      suggestion: "Implement secure session management practices"
+      
+    - name: "Missing Authorization Checks"
+      regex: '(?i)(delete|update|admin).*(?!authorize|permission|role)'
+      languages: ["*"]
+      description: "Potential missing authorization checks"
+      suggestion: "Implement proper authorization checks"
+
+ldap_injection:
+  enabled: true
+  severity: "medium"
+  patterns:
+    - name: "LDAP Query Construction"
+      regex: '\(\w+\s*=\s*.*\+.*\)'
+      languages: ["*"]
+      description: "Potential LDAP injection"
+      suggestion: "Use parameterized LDAP queries"
+
+xxe_vulnerability:
+  enabled: true
+  severity: "high"
+  patterns:
+    - name: "XML Parser Configuration"
+      regex: 'DocumentBuilderFactory|SAXParserFactory|XMLInputFactory'
+      languages: ["java"]
+      description: "XML parser without XXE protection"
+      suggestion: "Disable external entity processing in XML parsers"
+      
+    - name: "XML Loading"
+      regex: 'XmlDocument\.Load|XDocument\.Load'
+      languages: ["csharp"]
+      description: "XML loading without XXE protection"
+      suggestion: "Configure XML readers to prevent XXE attacks"
+
+ssrf_vulnerability:
+  enabled: true
+  severity: "medium"
+  patterns:
+    - name: "HTTP Requests with User Input"
+      regex: '(requests\.get|urllib\.request|HttpClient)\s*\(.*\$'
+      languages: ["python", "csharp"]
+      description: "HTTP request with potential user-controlled URL"
+      suggestion: "Validate and whitelist URLs before making requests"
+
+exclusions:
+  file_patterns:
+    - "**/test/**"
+    - "**/tests/**"
+    - "*.test.*"
+    - "*.spec.*"
+    - "**/mock/**"
+    - "**/fixtures/**"
+  
+  comment_patterns:
+    - "// TODO:"
+    - "// FIXME:"
+    - "// NOTE:"
+    - "/* test */"
+    - "# Example:"
+    
+  string_patterns:
+    - "example.com"
+    - "localhost"
+    - "127.0.0.1"
+    - "test@example.com"
+    - "password123"  # Common test password
