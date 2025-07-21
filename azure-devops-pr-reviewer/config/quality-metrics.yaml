@@ -1,0 +1,3 @@
+quality:
+  coverage_threshold: 80
+  lint_warnings_threshold: 10

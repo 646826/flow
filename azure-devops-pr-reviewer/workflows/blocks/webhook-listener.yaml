@@ -1,0 +1,8 @@
+id: webhook-listener
+kind: webhook
+params:
+  route: /api/pr
+  method: post
+  secret: ${WEBHOOK_SECRET}
+outputs:
+  - body
