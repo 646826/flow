@@ -1,0 +1,7 @@
+id: risk-assessment
+kind: function
+function: diff-analyzer.js
+inputs:
+  changes: ${code-analyzer-agent.analysis}
+outputs:
+  - risk

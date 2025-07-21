@@ -1,0 +1,11 @@
+review:
+  max_file_size: 1048576 # 1MB
+  supported_extensions:
+    - .js
+    - .ts
+    - .cs
+    - .css
+    - .html
+    - .json
+  analysis_depth: detailed
+  auto_approve_threshold: 0.95

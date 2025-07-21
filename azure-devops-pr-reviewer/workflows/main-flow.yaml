@@ -1,0 +1,13 @@
+version: 1.0
+name: PR Review Workflow
+
+on:
+  webhook: /api/pr
+
+blocks:
+  - blocks/webhook-listener.yaml
+  - blocks/azure-api-client.yaml
+  - blocks/code-analyzer-agent.yaml
+  - blocks/risk-assessment.yaml
+  - blocks/comment-generator.yaml
+  - blocks/report-builder.yaml

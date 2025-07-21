@@ -1,0 +1,7 @@
+id: azure-api-client
+kind: function
+function: azure-devops-client.js
+inputs:
+  prId: ${webhook-listener.body.pullRequestId}
+outputs:
+  - pr

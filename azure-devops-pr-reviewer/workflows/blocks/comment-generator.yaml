@@ -1,0 +1,7 @@
+id: comment-generator
+kind: function
+function: report-formatter.js
+inputs:
+  summary: ${risk-assessment.risk}
+outputs:
+  - comment

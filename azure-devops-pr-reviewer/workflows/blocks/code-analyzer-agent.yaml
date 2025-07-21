@@ -1,0 +1,6 @@
+id: code-analyzer-agent
+kind: agent
+inputs:
+  pr: ${azure-api-client.pr}
+outputs:
+  - analysis

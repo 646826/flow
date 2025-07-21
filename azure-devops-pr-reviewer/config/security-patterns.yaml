@@ -1,0 +1,5 @@
+patterns:
+  - name: SQL Injection
+    regex: "SELECT .* FROM .* WHERE .*" 
+  - name: Eval Usage
+    regex: "eval\\("
